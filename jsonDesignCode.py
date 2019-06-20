@@ -1,6 +1,5 @@
 import requests
 from datetime import datetime, timedelta, time
-from collections import Counter
 import pandas as pd
 
 # mongoDB
@@ -22,6 +21,8 @@ YESTERDAY_DATE=datetime(2019,5,16)
 # TODAY_MIDNIGHT=datetime.combine(TODAY_DATE, time.min)
 str=""
 list=[]
+all_data_list=[]
+
 
 for i in range(0,len(df)-1):
     dt = datetime.strptime(df.iloc[i][5], '%Y-%m-%d %H:%M:%S')
@@ -39,7 +40,7 @@ for i in range(0,len(df)-1):
         str+="\"" + item + "\","
     str=str[:-1]
     payload = "{\"skus\": [" + str + "]}"
-    print(payload)
+    # print(payload)
     headers = {'content-type': 'application/json'}
     querystring = {"start": "0", "count": "0"}
     response = requests.request("POST", url, data=payload, headers=headers, params=querystring)
@@ -47,16 +48,26 @@ for i in range(0,len(df)-1):
     list = []
     str = ""
     data=response.json()
-    print(type(data))
-    dict={}
-    for j in range(0,len(data['data'])):
+    # all_data_list=[]
+
+    all_data_list.append(data)
+    if dt<YESTERDAY_DATE:
+        break
+
+# print(len(all_data_list))
+# print(all_data_list)
+
+dict={}
+
+for x in range(0, len(all_data_list)):
+    for j in range(0, len(all_data_list[x]['data'])):
         try:
             # print(data['data'][j]['designCode'])
-            if(data['data'][j]['designCode']) != "":
-                ct=(data['data'][j]['categories'][0]['slug'])
-                bd = (data['data'][j]['brand']['slug'])
-                md=(data['data'][j]['model']['slug'])
-                dc = (data['data'][j]['designCode'])
+            if(all_data_list[x]['data'][j]['designCode']) != "":
+                ct=(all_data_list[x]['data'][j]['categories'][0]['slug'])
+                bd = (all_data_list[x]['data'][j]['brand']['slug'])
+                md=(all_data_list[x]['data'][j]['model']['slug'])
+                dc = (all_data_list[x]['data'][j]['designCode'])
                 if ct in dict.keys():
                     temp_brands = dict[ct]
                     if bd in temp_brands.keys():
@@ -90,10 +101,8 @@ for i in range(0,len(df)-1):
                     dict[ct] = c
         except KeyError:
             continue
-        if dt<YESTERDAY_DATE:
-            break
 
-        print(dict)
+print(dict)
 
 # print(Counter(DESIGN_CODE_LIST))
 
